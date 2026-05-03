@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PayTable - Divisor de cuentas</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="app-header">
+    <div>
+      <h1>PayTable</h1>
+      <p>Divide cuentas de mesa de forma clara, rápida y justa.</p>
+    </div>
+    <button id="resetBtn" class="secondary-btn">Nueva cuenta</button>
+  </header>
+
+  <main class="app-container">
+    <section class="card">
+      <h2>1. Datos de la mesa</h2>
+
+      <div class="form-row">
+        <label for="tableName">Nombre o número de mesa</label>
+        <input type="text" id="tableName" placeholder="Ej: Mesa 4" />
+      </div>
+
+      <div class="form-grid">
+        <div class="form-row">
+          <label for="taxPercent">Impuesto (%)</label>
+          <input type="number" id="taxPercent" value="0" min="0" step="0.01" />
+        </div>
+
+        <div class="form-row">
+          <label for="tipPercent">Propina (%)</label>
+          <input type="number" id="tipPercent" value="0" min="0" step="0.01" />
+        </div>
+      </div>
+
+      <div class="form-row">
+        <label for="tipMode">Dividir propina</label>
+        <select id="tipMode">
+          <option value="proportional">Según consumo</option>
+          <option value="equal">Equitativamente</option>
+        </select>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>2. Personas</h2>
+
+      <div class="inline-form">
+        <input type="text" id="personName" placeholder="Ej: Carlos" />
+        <button id="addPersonBtn">Agregar persona</button>
+      </div>
+
+      <div id="peopleList" class="list"></div>
+    </section>
+
+    <section class="card">
+      <h2>3. Productos consumidos</h2>
+
+      <div class="form-grid">
+        <div class="form-row">
+          <label for="itemName">Producto</label>
+          <input type="text" id="itemName" placeholder="Ej: Pizza familiar" />
+        </div>
+
+        <div class="form-row">
+          <label for="itemPrice">Precio total</label>
+          <input type="number" id="itemPrice" placeholder="Ej: 18.00" min="0" step="0.01" />
+        </div>
+      </div>
+
+      <button id="addItemBtn">Agregar producto</button>
+
+      <div id="itemsList" class="items-list"></div>
+    </section>
+
+    <section class="card summary-card">
+      <div class="summary-header">
+        <h2>4. Resumen final</h2>
+        <button id="calculateBtn" class="primary-btn">Calcular cuenta</button>
+      </div>
+
+      <div id="summary"></div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>PayTable MVP v1 - Prototipo inicial para división personalizada de cuentas.</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
