@@ -3,92 +3,149 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>PayTable - Divisor de cuentas</title>
+  <title>PayTable - Sistema para dividir cuentas</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <header class="app-header">
-    <div>
-      <h1>PayTable</h1>
-      <p>Divide cuentas de mesa de forma clara, rápida y justa.</p>
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="logo">PT</div>
+      <div>
+        <h1>PayTable</h1>
+        <p>Smart bill splitting</p>
+      </div>
     </div>
-    <button id="resetBtn" class="secondary-btn">Nueva cuenta</button>
-  </header>
 
-  <main class="app-container">
-    <section class="card">
-      <h2>1. Datos de la mesa</h2>
+    <nav class="nav">
+      <button id="navOpenTables" class="nav-btn active">Mesas abiertas</button>
+      <button id="navHistory" class="nav-btn">Historial</button>
+    </nav>
 
-      <div class="form-row">
-        <label for="tableName">Nombre o número de mesa</label>
-        <input type="text" id="tableName" placeholder="Ej: Mesa 4" />
+    <button id="newTableBtn" class="primary-btn full-btn">+ Nueva mesa</button>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div>
+        <h2 id="pageTitle">Mesas abiertas</h2>
+        <p id="pageSubtitle">Gestiona cuentas activas, divide productos y cierra mesas.</p>
       </div>
 
-      <div class="form-grid">
-        <div class="form-row">
-          <label for="taxPercent">Impuesto (%)</label>
-          <input type="number" id="taxPercent" value="0" min="0" step="0.01" />
-        </div>
-
-        <div class="form-row">
-          <label for="tipPercent">Propina (%)</label>
-          <input type="number" id="tipPercent" value="0" min="0" step="0.01" />
-        </div>
+      <div class="topbar-actions">
+        <button id="printBtn" class="secondary-btn hidden">Imprimir resumen</button>
+        <button id="downloadBtn" class="secondary-btn hidden">Descargar resumen</button>
       </div>
+    </header>
 
-      <div class="form-row">
-        <label for="tipMode">Dividir propina</label>
-        <select id="tipMode">
-          <option value="proportional">Según consumo</option>
-          <option value="equal">Equitativamente</option>
-        </select>
-      </div>
+    <section id="tablesView" class="view">
+      <div id="openTablesGrid" class="tables-grid"></div>
     </section>
 
-    <section class="card">
-      <h2>2. Personas</h2>
-
-      <div class="inline-form">
-        <input type="text" id="personName" placeholder="Ej: Carlos" />
-        <button id="addPersonBtn">Agregar persona</button>
-      </div>
-
-      <div id="peopleList" class="list"></div>
+    <section id="historyView" class="view hidden">
+      <div id="historyList" class="history-list"></div>
     </section>
 
-    <section class="card">
-      <h2>3. Productos consumidos</h2>
+    <section id="tableDetailView" class="view hidden">
+      <div class="detail-grid">
+        <section class="card">
+          <div class="card-header">
+            <div>
+              <h3 id="activeTableName">Mesa</h3>
+              <p id="activeTableMeta">Cuenta abierta</p>
+            </div>
+            <button id="backToTablesBtn" class="secondary-btn">Volver</button>
+          </div>
 
-      <div class="form-grid">
-        <div class="form-row">
-          <label for="itemName">Producto</label>
-          <input type="text" id="itemName" placeholder="Ej: Pizza familiar" />
-        </div>
+          <div class="form-grid">
+            <div class="form-row">
+              <label for="taxPercent">Impuesto (%)</label>
+              <input type="number" id="taxPercent" value="0" min="0" step="0.01" />
+            </div>
 
-        <div class="form-row">
-          <label for="itemPrice">Precio total</label>
-          <input type="number" id="itemPrice" placeholder="Ej: 18.00" min="0" step="0.01" />
-        </div>
+            <div class="form-row">
+              <label for="tipPercent">Propina (%)</label>
+              <input type="number" id="tipPercent" value="0" min="0" step="0.01" />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <label for="tipMode">Dividir propina</label>
+            <select id="tipMode">
+              <option value="proportional">Según consumo</option>
+              <option value="equal">Equitativamente</option>
+            </select>
+          </div>
+        </section>
+
+        <section class="card">
+          <h3>Personas</h3>
+          <div class="inline-form">
+            <input type="text" id="personName" placeholder="Ej: Carlos" />
+            <button id="addPersonBtn">Agregar</button>
+          </div>
+          <div id="peopleList" class="people-list"></div>
+        </section>
+
+        <section class="card products-card">
+          <h3>Productos consumidos</h3>
+
+          <div class="form-grid product-form-grid">
+            <div class="form-row">
+              <label for="itemName">Producto</label>
+              <input type="text" id="itemName" placeholder="Ej: Pizza familiar" />
+            </div>
+
+            <div class="form-row">
+              <label for="itemQty">Cantidad</label>
+              <input type="number" id="itemQty" value="1" min="1" step="1" />
+            </div>
+
+            <div class="form-row">
+              <label for="itemPrice">Precio unitario</label>
+              <input type="number" id="itemPrice" placeholder="Ej: 18.00" min="0" step="0.01" />
+            </div>
+          </div>
+
+          <button id="addItemBtn">Agregar producto</button>
+          <div id="itemsList" class="items-list"></div>
+        </section>
+
+        <section class="card summary-card">
+          <div class="summary-header">
+            <div>
+              <h3>Resumen final</h3>
+              <p>Totales por persona antes de cerrar la cuenta.</p>
+            </div>
+            <button id="calculateBtn" class="primary-btn">Calcular</button>
+          </div>
+
+          <div id="summary"></div>
+
+          <div class="close-actions">
+            <button id="closeTableBtn" class="success-btn">Cerrar cuenta</button>
+            <button id="deleteTableBtn" class="danger-btn">Eliminar mesa</button>
+          </div>
+        </section>
       </div>
-
-      <button id="addItemBtn">Agregar producto</button>
-
-      <div id="itemsList" class="items-list"></div>
-    </section>
-
-    <section class="card summary-card">
-      <div class="summary-header">
-        <h2>4. Resumen final</h2>
-        <button id="calculateBtn" class="primary-btn">Calcular cuenta</button>
-      </div>
-
-      <div id="summary"></div>
     </section>
   </main>
 
-  <footer class="footer">
-    <p>PayTable MVP v1 - Prototipo inicial para división personalizada de cuentas.</p>
-  </footer>
+  <div id="tableModal" class="modal hidden">
+    <div class="modal-card">
+      <h3>Nueva mesa</h3>
+      <p>Crea una cuenta nueva para empezar a dividir productos.</p>
+
+      <div class="form-row">
+        <label for="newTableName">Nombre o número de mesa</label>
+        <input type="text" id="newTableName" placeholder="Ej: Mesa 4" />
+      </div>
+
+      <div class="modal-actions">
+        <button id="cancelNewTableBtn" class="secondary-btn">Cancelar</button>
+        <button id="createTableBtn" class="primary-btn">Crear mesa</button>
+      </div>
+    </div>
+  </div>
 
   <script src="app.js"></script>
 </body>
