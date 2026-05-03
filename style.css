@@ -151,41 +151,14 @@ button:hover {
   background: var(--primary-dark);
 }
 
-.primary-btn {
-  background: var(--primary);
-}
-
-.secondary-btn {
-  background: #374151;
-}
-
-.secondary-btn:hover {
-  background: #4b5563;
-}
-
-.success-btn {
-  background: var(--success);
-}
-
-.success-btn:hover {
-  background: var(--success-dark);
-}
-
-.danger-btn {
-  background: var(--danger);
-}
-
-.danger-btn:hover {
-  background: var(--danger-dark);
-}
-
-.warning-btn {
-  background: var(--warning);
-}
-
-.full-btn {
-  width: 100%;
-}
+.primary-btn { background: var(--primary); }
+.secondary-btn { background: #374151; }
+.secondary-btn:hover { background: #4b5563; }
+.success-btn { background: var(--success); }
+.success-btn:hover { background: var(--success-dark); }
+.danger-btn { background: var(--danger); }
+.danger-btn:hover { background: var(--danger-dark); }
+.full-btn { width: 100%; }
 
 .hidden {
   display: none !important;
@@ -200,6 +173,40 @@ button:hover {
   to { opacity: 1; transform: translateY(0); }
 }
 
+.hero-card {
+  background: linear-gradient(135deg, #0f172a, #1d4ed8);
+  color: white;
+  border-radius: 24px;
+  padding: 26px;
+  margin-bottom: 18px;
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  align-items: center;
+  box-shadow: 0 18px 42px rgba(15, 23, 42, 0.20);
+}
+
+.hero-card h3 {
+  margin: 8px 0;
+  font-size: 30px;
+}
+
+.hero-card p {
+  margin: 0;
+  color: #dbeafe;
+  max-width: 680px;
+}
+
+.eyebrow {
+  display: inline-block;
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
 .kpi-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(150px, 1fr));
@@ -207,12 +214,20 @@ button:hover {
   margin-bottom: 18px;
 }
 
-.kpi-card {
+.kpi-card,
+.card,
+.table-card,
+.history-item,
+.quick-product-row,
+.mini-row {
   background: white;
   border: 1px solid var(--line);
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
+}
+
+.kpi-card {
   border-radius: 20px;
   padding: 20px;
-  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
 }
 
 .kpi-card span {
@@ -241,11 +256,8 @@ button:hover {
 }
 
 .table-card {
-  background: var(--card);
   border-radius: 20px;
   padding: 20px;
-  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
-  border: 1px solid var(--line);
   cursor: pointer;
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
@@ -302,11 +314,8 @@ button:hover {
 }
 
 .card {
-  background: white;
   border-radius: 20px;
   padding: 20px;
-  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
-  border: 1px solid var(--line);
 }
 
 .card h3 {
@@ -340,17 +349,25 @@ button:hover {
 }
 
 input,
-select {
+select,
+textarea {
   width: 100%;
   padding: 12px;
   border: 1px solid #cbd5e1;
   border-radius: 12px;
   font-size: 15px;
   background: white;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+textarea {
+  min-height: 90px;
+  resize: vertical;
 }
 
 input:focus,
-select:focus {
+select:focus,
+textarea:focus {
   outline: 3px solid rgba(37, 99, 235, 0.2);
   border-color: var(--primary);
 }
@@ -531,15 +548,12 @@ select:focus {
 .history-item,
 .quick-product-row,
 .mini-row {
-  background: white;
-  border: 1px solid var(--line);
   border-radius: 18px;
   padding: 18px;
   display: flex;
   justify-content: space-between;
   gap: 16px;
   align-items: center;
-  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
 }
 
 .history-item h3,
@@ -601,6 +615,43 @@ select:focus {
   font-weight: 800;
 }
 
+.preview-ticket {
+  margin-top: 16px;
+}
+
+.ticket-preview-box {
+  background: #f9fafb;
+  border: 1px dashed #94a3b8;
+  border-radius: 16px;
+  padding: 18px;
+  display: grid;
+  gap: 6px;
+  max-width: 360px;
+}
+
+.ticket-header {
+  text-align: center;
+  border-bottom: 1px dashed #cbd5e1;
+  padding-bottom: 14px;
+  margin-bottom: 14px;
+}
+
+.ticket-header h3 {
+  margin: 0;
+  font-size: 24px;
+}
+
+.ticket-header p {
+  margin: 6px 0 0;
+}
+
+.ticket-message {
+  text-align: center;
+  margin-top: 16px;
+  color: var(--muted);
+  font-style: italic;
+}
+
 .modal {
   position: fixed;
   inset: 0;
@@ -632,10 +683,6 @@ select:focus {
   display: flex;
   justify-content: flex-end;
   gap: 10px;
-}
-
-.receipt-print {
-  display: none;
 }
 
 @media print {
@@ -699,6 +746,11 @@ select:focus {
 
   .main {
     padding: 18px;
+  }
+
+  .hero-card {
+    flex-direction: column;
+    align-items: stretch;
   }
 }
 

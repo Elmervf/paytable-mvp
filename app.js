@@ -1,6 +1,15 @@
-const STORAGE_KEY = "paytable_system_v3";
+const STORAGE_KEY = "paytable_system_v4";
+
+const defaultSettings = {
+  restaurantName: "PayTable Restaurant",
+  currencySymbol: "$",
+  defaultTax: 0,
+  defaultTip: 10,
+  ticketMessage: "Gracias por su visita. ¡Vuelva pronto!"
+};
 
 const appState = {
+  settings: { ...defaultSettings },
   tables: [],
   history: [],
   quickProducts: [
@@ -18,24 +27,29 @@ const els = {
   navDashboard: document.getElementById("navDashboard"),
   navOpenTables: document.getElementById("navOpenTables"),
   navProducts: document.getElementById("navProducts"),
+  navSettings: document.getElementById("navSettings"),
   navHistory: document.getElementById("navHistory"),
 
   newTableBtn: document.getElementById("newTableBtn"),
   dashboardNewTableBtn: document.getElementById("dashboardNewTableBtn"),
+  heroNewTableBtn: document.getElementById("heroNewTableBtn"),
 
   pageTitle: document.getElementById("pageTitle"),
   pageSubtitle: document.getElementById("pageSubtitle"),
   printBtn: document.getElementById("printBtn"),
   downloadBtn: document.getElementById("downloadBtn"),
+  whatsappBtn: document.getElementById("whatsappBtn"),
   exportHistoryBtn: document.getElementById("exportHistoryBtn"),
   clearHistoryBtn: document.getElementById("clearHistoryBtn"),
 
   dashboardView: document.getElementById("dashboardView"),
   tablesView: document.getElementById("tablesView"),
   productsView: document.getElementById("productsView"),
+  settingsView: document.getElementById("settingsView"),
   historyView: document.getElementById("historyView"),
   tableDetailView: document.getElementById("tableDetailView"),
 
+  restaurantHeroName: document.getElementById("restaurantHeroName"),
   kpiOpenTables: document.getElementById("kpiOpenTables"),
   kpiClosedToday: document.getElementById("kpiClosedToday"),
   kpiSalesToday: document.getElementById("kpiSalesToday"),
@@ -52,6 +66,15 @@ const els = {
   addQuickProductBtn: document.getElementById("addQuickProductBtn"),
   quickProductsList: document.getElementById("quickProductsList"),
   quickProductsForTable: document.getElementById("quickProductsForTable"),
+
+  restaurantName: document.getElementById("restaurantName"),
+  currencySymbol: document.getElementById("currencySymbol"),
+  defaultTax: document.getElementById("defaultTax"),
+  defaultTip: document.getElementById("defaultTip"),
+  restaurantMessage: document.getElementById("restaurantMessage"),
+  saveSettingsBtn: document.getElementById("saveSettingsBtn"),
+  settingsPreviewName: document.getElementById("settingsPreviewName"),
+  settingsPreviewMsg: document.getElementById("settingsPreviewMsg"),
 
   tableModal: document.getElementById("tableModal"),
   newTableName: document.getElementById("newTableName"),
@@ -87,8 +110,12 @@ function createId(prefix) {
   return `${prefix}_${Date.now()}_${Math.floor(Math.random() * 100000)}`;
 }
 
+function currency() {
+  return appState.settings.currencySymbol || "$";
+}
+
 function formatMoney(value) {
-  return `$${Number(value || 0).toFixed(2)}`;
+  return `${currency()}${Number(value || 0).toFixed(2)}`;
 }
 
 function formatDate(dateString) {
@@ -121,6 +148,7 @@ function loadApp() {
 
   try {
     const parsed = JSON.parse(saved);
+    appState.settings = { ...defaultSettings, ...(parsed.settings || {}) };
     appState.tables = parsed.tables || [];
     appState.history = parsed.history || [];
     appState.quickProducts = parsed.quickProducts?.length ? parsed.quickProducts : appState.quickProducts;
@@ -150,6 +178,7 @@ function setView(viewName) {
     els.dashboardView,
     els.tablesView,
     els.productsView,
+    els.settingsView,
     els.historyView,
     els.tableDetailView
   ].forEach(view => view.classList.add("hidden"));
@@ -158,11 +187,13 @@ function setView(viewName) {
     els.navDashboard,
     els.navOpenTables,
     els.navProducts,
+    els.navSettings,
     els.navHistory
   ].forEach(btn => btn.classList.remove("active"));
 
   els.printBtn.classList.add("hidden");
   els.downloadBtn.classList.add("hidden");
+  els.whatsappBtn.classList.add("hidden");
   els.exportHistoryBtn.classList.add("hidden");
   els.clearHistoryBtn.classList.add("hidden");
 
@@ -170,7 +201,7 @@ function setView(viewName) {
     els.dashboardView.classList.remove("hidden");
     els.navDashboard.classList.add("active");
     els.pageTitle.textContent = "Dashboard";
-    els.pageSubtitle.textContent = "Vista general de mesas, ventas y cuentas cerradas.";
+    els.pageSubtitle.textContent = "Vista general del restaurante, mesas y ventas registradas.";
     renderDashboard();
   }
 
@@ -190,6 +221,14 @@ function setView(viewName) {
     renderQuickProductsManager();
   }
 
+  if (viewName === "settings") {
+    els.settingsView.classList.remove("hidden");
+    els.navSettings.classList.add("active");
+    els.pageTitle.textContent = "Configuración";
+    els.pageSubtitle.textContent = "Personaliza PayTable para un restaurante real.";
+    renderSettings();
+  }
+
   if (viewName === "history") {
     els.historyView.classList.remove("hidden");
     els.navHistory.classList.add("active");
@@ -206,6 +245,7 @@ function setView(viewName) {
     els.pageSubtitle.textContent = "Edita personas, productos, impuestos y propinas.";
     els.printBtn.classList.remove("hidden");
     els.downloadBtn.classList.remove("hidden");
+    els.whatsappBtn.classList.remove("hidden");
     renderActiveTable();
   }
 }
@@ -215,6 +255,7 @@ function renderDashboard() {
   const salesToday = closedToday.reduce((sum, item) => sum + item.tableTotal, 0);
   const avgToday = closedToday.length ? salesToday / closedToday.length : 0;
 
+  els.restaurantHeroName.textContent = `${appState.settings.restaurantName}: cuentas claras en segundos`;
   els.kpiOpenTables.textContent = appState.tables.length;
   els.kpiClosedToday.textContent = closedToday.length;
   els.kpiSalesToday.textContent = formatMoney(salesToday);
@@ -259,6 +300,34 @@ function renderDashboard() {
   }
 }
 
+function renderSettings() {
+  els.restaurantName.value = appState.settings.restaurantName;
+  els.currencySymbol.value = appState.settings.currencySymbol;
+  els.defaultTax.value = appState.settings.defaultTax;
+  els.defaultTip.value = appState.settings.defaultTip;
+  els.restaurantMessage.value = appState.settings.ticketMessage;
+  updateSettingsPreview();
+}
+
+function updateSettingsPreview() {
+  els.settingsPreviewName.textContent = els.restaurantName.value || "PayTable Restaurant";
+  els.settingsPreviewMsg.textContent = els.restaurantMessage.value || "Gracias por su visita.";
+}
+
+function saveSettings() {
+  appState.settings = {
+    restaurantName: els.restaurantName.value.trim() || defaultSettings.restaurantName,
+    currencySymbol: els.currencySymbol.value.trim() || "$",
+    defaultTax: Number(els.defaultTax.value) || 0,
+    defaultTip: Number(els.defaultTip.value) || 0,
+    ticketMessage: els.restaurantMessage.value.trim() || defaultSettings.ticketMessage
+  };
+
+  saveApp();
+  updateSettingsPreview();
+  alert("Configuración guardada correctamente.");
+}
+
 function openNewTableModal() {
   els.newTableName.value = "";
   els.tableModal.classList.remove("hidden");
@@ -282,8 +351,8 @@ function createTable() {
     name,
     status: "open",
     createdAt: new Date().toISOString(),
-    taxPercent: 0,
-    tipPercent: 0,
+    taxPercent: Number(appState.settings.defaultTax) || 0,
+    tipPercent: Number(appState.settings.defaultTip) || 0,
     tipMode: "proportional",
     people: [],
     items: []
@@ -744,6 +813,9 @@ function calculateBill({ silent = false } = {}) {
   const result = {
     tableId: table.id,
     tableName: table.name,
+    restaurantName: appState.settings.restaurantName,
+    ticketMessage: appState.settings.ticketMessage,
+    currencySymbol: appState.settings.currencySymbol,
     createdAt: table.createdAt,
     closedAt: new Date().toISOString(),
     peopleTotals,
@@ -803,8 +875,11 @@ function renderSummary(result) {
   }).join("");
 
   els.summary.innerHTML = `
-    <h3>PAYTABLE</h3>
-    <p><strong>${result.tableName}</strong> · Resumen generado: ${formatDate(result.closedAt)}</p>
+    <div class="ticket-header">
+      <h3>${result.restaurantName || appState.settings.restaurantName}</h3>
+      <p><strong>${result.tableName}</strong> · ${formatDate(result.closedAt)}</p>
+      <p>Generado con PayTable</p>
+    </div>
 
     <div class="summary-grid">
       ${peopleCards}
@@ -813,6 +888,8 @@ function renderSummary(result) {
     <div class="table-total">
       Total de la mesa: ${formatMoney(result.tableTotal)}
     </div>
+
+    <p class="ticket-message">${result.ticketMessage || appState.settings.ticketMessage}</p>
   `;
 }
 
@@ -878,6 +955,7 @@ function renderHistory() {
     row.innerHTML = `
       <div>
         <h3>${item.tableName}</h3>
+        <p>${item.restaurantName || appState.settings.restaurantName}</p>
         <p>Cerrada: ${formatDate(item.closedAt)} · ${item.peopleTotals.length} personas</p>
       </div>
       <div class="history-total">${formatMoney(item.tableTotal)}</div>
@@ -1001,7 +1079,7 @@ function renderQuickProductsForTable() {
 function buildSummaryText(result) {
   const lines = [];
 
-  lines.push("PAYTABLE");
+  lines.push(result.restaurantName || appState.settings.restaurantName);
   lines.push("Resumen de cuenta");
   lines.push("--------------------------------");
   lines.push(`Mesa: ${result.tableName}`);
@@ -1024,6 +1102,9 @@ function buildSummaryText(result) {
   lines.push(`Impuesto mesa: ${formatMoney(result.tableTax)}`);
   lines.push(`Propina mesa: ${formatMoney(result.tableTip)}`);
   lines.push(`TOTAL MESA: ${formatMoney(result.tableTotal)}`);
+  lines.push("");
+  lines.push(result.ticketMessage || appState.settings.ticketMessage);
+  lines.push("Generado con PayTable");
 
   return lines.join("\n");
 }
@@ -1055,6 +1136,16 @@ function downloadSummary() {
   URL.revokeObjectURL(url);
 }
 
+function shareWhatsApp() {
+  const result = appState.lastSummary || calculateBill();
+
+  if (!result) return;
+
+  const text = buildSummaryText(result);
+  const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
+  window.open(url, "_blank");
+}
+
 function exportHistoryToCsv() {
   if (appState.history.length === 0) {
     alert("No hay historial para exportar.");
@@ -1062,6 +1153,7 @@ function exportHistoryToCsv() {
   }
 
   const headers = [
+    "restaurantName",
     "tableName",
     "closedAt",
     "peopleCount",
@@ -1072,6 +1164,7 @@ function exportHistoryToCsv() {
   ];
 
   const rows = appState.history.map(item => [
+    item.restaurantName || appState.settings.restaurantName,
     item.tableName,
     formatDate(item.closedAt),
     item.peopleTotals.length,
@@ -1110,10 +1203,13 @@ function clearHistory() {
 els.navDashboard.addEventListener("click", () => setView("dashboard"));
 els.navOpenTables.addEventListener("click", () => setView("tables"));
 els.navProducts.addEventListener("click", () => setView("products"));
+els.navSettings.addEventListener("click", () => setView("settings"));
 els.navHistory.addEventListener("click", () => setView("history"));
 
 els.newTableBtn.addEventListener("click", openNewTableModal);
 els.dashboardNewTableBtn.addEventListener("click", openNewTableModal);
+els.heroNewTableBtn.addEventListener("click", openNewTableModal);
+
 els.cancelNewTableBtn.addEventListener("click", closeNewTableModal);
 els.createTableBtn.addEventListener("click", createTable);
 els.backToTablesBtn.addEventListener("click", () => setView("tables"));
@@ -1122,12 +1218,17 @@ els.addPersonBtn.addEventListener("click", addPerson);
 els.addItemBtn.addEventListener("click", addItem);
 els.addQuickProductBtn.addEventListener("click", addQuickProduct);
 
+els.saveSettingsBtn.addEventListener("click", saveSettings);
+els.restaurantName.addEventListener("input", updateSettingsPreview);
+els.restaurantMessage.addEventListener("input", updateSettingsPreview);
+
 els.calculateBtn.addEventListener("click", () => calculateBill());
 els.closeTableBtn.addEventListener("click", closeTable);
 els.deleteTableBtn.addEventListener("click", deleteTable);
 
 els.printBtn.addEventListener("click", printSummary);
 els.downloadBtn.addEventListener("click", downloadSummary);
+els.whatsappBtn.addEventListener("click", shareWhatsApp);
 els.exportHistoryBtn.addEventListener("click", exportHistoryToCsv);
 els.clearHistoryBtn.addEventListener("click", clearHistory);
 

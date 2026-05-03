@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>PayTable v3 - Sistema para restaurantes</title>
-  <link rel="stylesheet" href="style.css?v=3.0" />
+  <title>PayTable v4 - Demo vendible</title>
+  <link rel="stylesheet" href="style.css?v=4.0" />
 </head>
 <body>
   <aside class="sidebar">
@@ -20,14 +20,15 @@
       <button id="navDashboard" class="nav-btn active">Dashboard</button>
       <button id="navOpenTables" class="nav-btn">Mesas abiertas</button>
       <button id="navProducts" class="nav-btn">Productos frecuentes</button>
+      <button id="navSettings" class="nav-btn">Configuración</button>
       <button id="navHistory" class="nav-btn">Historial</button>
     </nav>
 
     <button id="newTableBtn" class="primary-btn full-btn">+ Nueva mesa</button>
 
     <div class="sidebar-footer">
-      <p>PayTable v3</p>
-      <span>Pre-commercial MVP</span>
+      <p>PayTable v4</p>
+      <span>Demo vendible</span>
     </div>
   </aside>
 
@@ -35,18 +36,28 @@
     <header class="topbar">
       <div>
         <h2 id="pageTitle">Dashboard</h2>
-        <p id="pageSubtitle">Vista general de mesas, ventas y cuentas cerradas.</p>
+        <p id="pageSubtitle">Vista general del restaurante, mesas y ventas registradas.</p>
       </div>
 
       <div class="topbar-actions">
-        <button id="printBtn" class="secondary-btn hidden">Imprimir resumen</button>
+        <button id="printBtn" class="secondary-btn hidden">Imprimir ticket</button>
         <button id="downloadBtn" class="secondary-btn hidden">Descargar resumen</button>
+        <button id="whatsappBtn" class="success-btn hidden">Compartir WhatsApp</button>
         <button id="exportHistoryBtn" class="secondary-btn hidden">Exportar CSV</button>
         <button id="clearHistoryBtn" class="danger-btn hidden">Borrar historial</button>
       </div>
     </header>
 
     <section id="dashboardView" class="view">
+      <section class="hero-card">
+        <div>
+          <span class="eyebrow">Demo comercial</span>
+          <h3 id="restaurantHeroName">PayTable para restaurantes</h3>
+          <p>Divide cuentas por persona, calcula propinas/impuestos y genera un resumen claro para clientes en segundos.</p>
+        </div>
+        <button id="heroNewTableBtn" class="primary-btn">Crear primera mesa</button>
+      </section>
+
       <div class="kpi-grid">
         <div class="kpi-card">
           <span>Mesas abiertas</span>
@@ -121,6 +132,53 @@
         <button id="addQuickProductBtn" class="primary-btn">Agregar producto frecuente</button>
 
         <div id="quickProductsList" class="quick-products-list"></div>
+      </section>
+    </section>
+
+    <section id="settingsView" class="view hidden">
+      <section class="card">
+        <div class="card-header">
+          <div>
+            <h3>Configuración del restaurante</h3>
+            <p>Personaliza la demo para que parezca instalada en un negocio real.</p>
+          </div>
+          <button id="saveSettingsBtn" class="primary-btn">Guardar configuración</button>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-row">
+            <label for="restaurantName">Nombre del restaurante</label>
+            <input type="text" id="restaurantName" placeholder="Ej: La Esquina Bistro" />
+          </div>
+
+          <div class="form-row">
+            <label for="currencySymbol">Moneda</label>
+            <input type="text" id="currencySymbol" placeholder="$" maxlength="4" />
+          </div>
+
+          <div class="form-row">
+            <label for="defaultTax">Impuesto predeterminado (%)</label>
+            <input type="number" id="defaultTax" min="0" step="0.01" />
+          </div>
+
+          <div class="form-row">
+            <label for="defaultTip">Propina predeterminada (%)</label>
+            <input type="number" id="defaultTip" min="0" step="0.01" />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <label for="restaurantMessage">Mensaje del ticket</label>
+          <textarea id="restaurantMessage" placeholder="Ej: Gracias por su visita. ¡Vuelva pronto!"></textarea>
+        </div>
+
+        <div class="preview-ticket">
+          <h4>Vista previa del ticket</h4>
+          <div class="ticket-preview-box">
+            <strong id="settingsPreviewName">PayTable Restaurant</strong>
+            <span id="settingsPreviewMsg">Gracias por su visita.</span>
+          </div>
+        </div>
       </section>
     </section>
 
@@ -247,6 +305,6 @@
     </div>
   </div>
 
-  <script src="app.js?v=3.0"></script>
+  <script src="app.js?v=4.0"></script>
 </body>
 </html>
