@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>PayTable - Sistema para dividir cuentas</title>
-  <link rel="stylesheet" href="style.css?v=2.1" />
+  <title>PayTable v3 - Sistema para restaurantes</title>
+  <link rel="stylesheet" href="style.css?v=3.0" />
 </head>
 <body>
   <aside class="sidebar">
@@ -12,33 +12,116 @@
       <div class="logo">PT</div>
       <div>
         <h1>PayTable</h1>
-        <p>Smart bill splitting</p>
+        <p>Restaurant bill manager</p>
       </div>
     </div>
 
     <nav class="nav">
-      <button id="navOpenTables" class="nav-btn active">Mesas abiertas</button>
+      <button id="navDashboard" class="nav-btn active">Dashboard</button>
+      <button id="navOpenTables" class="nav-btn">Mesas abiertas</button>
+      <button id="navProducts" class="nav-btn">Productos frecuentes</button>
       <button id="navHistory" class="nav-btn">Historial</button>
     </nav>
 
     <button id="newTableBtn" class="primary-btn full-btn">+ Nueva mesa</button>
+
+    <div class="sidebar-footer">
+      <p>PayTable v3</p>
+      <span>Pre-commercial MVP</span>
+    </div>
   </aside>
 
   <main class="main">
     <header class="topbar">
       <div>
-        <h2 id="pageTitle">Mesas abiertas</h2>
-        <p id="pageSubtitle">Gestiona cuentas activas, divide productos y cierra mesas.</p>
+        <h2 id="pageTitle">Dashboard</h2>
+        <p id="pageSubtitle">Vista general de mesas, ventas y cuentas cerradas.</p>
       </div>
 
       <div class="topbar-actions">
         <button id="printBtn" class="secondary-btn hidden">Imprimir resumen</button>
         <button id="downloadBtn" class="secondary-btn hidden">Descargar resumen</button>
+        <button id="exportHistoryBtn" class="secondary-btn hidden">Exportar CSV</button>
+        <button id="clearHistoryBtn" class="danger-btn hidden">Borrar historial</button>
       </div>
     </header>
 
-    <section id="tablesView" class="view">
+    <section id="dashboardView" class="view">
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <span>Mesas abiertas</span>
+          <strong id="kpiOpenTables">0</strong>
+        </div>
+        <div class="kpi-card">
+          <span>Cuentas cerradas hoy</span>
+          <strong id="kpiClosedToday">0</strong>
+        </div>
+        <div class="kpi-card">
+          <span>Ventas registradas hoy</span>
+          <strong id="kpiSalesToday">$0.00</strong>
+        </div>
+        <div class="kpi-card">
+          <span>Promedio por mesa</span>
+          <strong id="kpiAvgTable">$0.00</strong>
+        </div>
+      </div>
+
+      <div class="dashboard-grid">
+        <section class="card">
+          <div class="card-header">
+            <div>
+              <h3>Mesas activas</h3>
+              <p>Cuentas que todavía están abiertas.</p>
+            </div>
+            <button id="dashboardNewTableBtn" class="primary-btn">+ Nueva mesa</button>
+          </div>
+          <div id="dashboardOpenTables" class="mini-list"></div>
+        </section>
+
+        <section class="card">
+          <div class="card-header">
+            <div>
+              <h3>Últimas cuentas cerradas</h3>
+              <p>Actividad reciente del negocio.</p>
+            </div>
+          </div>
+          <div id="dashboardRecentHistory" class="mini-list"></div>
+        </section>
+      </div>
+    </section>
+
+    <section id="tablesView" class="view hidden">
       <div id="openTablesGrid" class="tables-grid"></div>
+    </section>
+
+    <section id="productsView" class="view hidden">
+      <section class="card">
+        <div class="card-header">
+          <div>
+            <h3>Productos frecuentes</h3>
+            <p>Agrega productos usados a menudo para cargarlos rápido en una mesa.</p>
+          </div>
+        </div>
+
+        <div class="form-grid product-form-grid">
+          <div class="form-row">
+            <label for="quickProductName">Producto</label>
+            <input type="text" id="quickProductName" placeholder="Ej: Pupusa revuelta" />
+          </div>
+          <div class="form-row">
+            <label for="quickProductPrice">Precio</label>
+            <input type="number" id="quickProductPrice" placeholder="Ej: 0.90" min="0" step="0.01" />
+          </div>
+          <div class="form-row">
+            <label for="quickProductCategory">Categoría</label>
+            <input type="text" id="quickProductCategory" placeholder="Ej: Comida" />
+          </div>
+        </div>
+
+        <button id="addQuickProductBtn" class="primary-btn">Agregar producto frecuente</button>
+
+        <div id="quickProductsList" class="quick-products-list"></div>
+      </section>
     </section>
 
     <section id="historyView" class="view hidden">
@@ -54,6 +137,11 @@
               <p id="activeTableMeta">Cuenta abierta</p>
             </div>
             <button id="backToTablesBtn" class="secondary-btn">Volver</button>
+          </div>
+
+          <div class="form-row">
+            <label for="editTableName">Editar nombre de mesa</label>
+            <input type="text" id="editTableName" placeholder="Ej: Mesa 4" />
           </div>
 
           <div class="form-grid">
@@ -75,6 +163,8 @@
               <option value="equal">Equitativamente</option>
             </select>
           </div>
+
+          <div id="tableStatusBadge" class="status-box">Estado: Abierta</div>
         </section>
 
         <section class="card">
@@ -87,7 +177,13 @@
         </section>
 
         <section class="card products-card">
-          <h3>Productos consumidos</h3>
+          <h3>Productos frecuentes</h3>
+          <p>Selecciona rápido productos guardados. Puedes cambiar cantidad antes de agregarlos.</p>
+          <div id="quickProductsForTable" class="quick-products-grid"></div>
+        </section>
+
+        <section class="card products-card">
+          <h3>Agregar producto manual</h3>
 
           <div class="form-grid product-form-grid">
             <div class="form-row">
@@ -107,6 +203,10 @@
           </div>
 
           <button id="addItemBtn">Agregar producto</button>
+        </section>
+
+        <section class="card products-card">
+          <h3>Productos consumidos</h3>
           <div id="itemsList" class="items-list"></div>
         </section>
 
@@ -147,6 +247,6 @@
     </div>
   </div>
 
-  <script src="app.js"></script>
+  <script src="app.js?v=3.0"></script>
 </body>
 </html>

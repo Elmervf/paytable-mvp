@@ -1,26 +1,57 @@
-const STORAGE_KEY = "paytable_system_v2";
+const STORAGE_KEY = "paytable_system_v3";
 
 const appState = {
   tables: [],
   history: [],
+  quickProducts: [
+    { id: "qp_1", name: "Pupusa revuelta", price: 0.90, category: "Comida" },
+    { id: "qp_2", name: "Soda", price: 1.00, category: "Bebida" },
+    { id: "qp_3", name: "Cerveza", price: 2.00, category: "Bebida" },
+    { id: "qp_4", name: "Hamburguesa", price: 7.00, category: "Comida" },
+    { id: "qp_5", name: "Pizza familiar", price: 18.00, category: "Comida" }
+  ],
   activeTableId: null,
   lastSummary: null
 };
 
 const els = {
+  navDashboard: document.getElementById("navDashboard"),
   navOpenTables: document.getElementById("navOpenTables"),
+  navProducts: document.getElementById("navProducts"),
   navHistory: document.getElementById("navHistory"),
+
   newTableBtn: document.getElementById("newTableBtn"),
+  dashboardNewTableBtn: document.getElementById("dashboardNewTableBtn"),
+
   pageTitle: document.getElementById("pageTitle"),
   pageSubtitle: document.getElementById("pageSubtitle"),
   printBtn: document.getElementById("printBtn"),
   downloadBtn: document.getElementById("downloadBtn"),
+  exportHistoryBtn: document.getElementById("exportHistoryBtn"),
+  clearHistoryBtn: document.getElementById("clearHistoryBtn"),
 
+  dashboardView: document.getElementById("dashboardView"),
   tablesView: document.getElementById("tablesView"),
+  productsView: document.getElementById("productsView"),
   historyView: document.getElementById("historyView"),
   tableDetailView: document.getElementById("tableDetailView"),
+
+  kpiOpenTables: document.getElementById("kpiOpenTables"),
+  kpiClosedToday: document.getElementById("kpiClosedToday"),
+  kpiSalesToday: document.getElementById("kpiSalesToday"),
+  kpiAvgTable: document.getElementById("kpiAvgTable"),
+  dashboardOpenTables: document.getElementById("dashboardOpenTables"),
+  dashboardRecentHistory: document.getElementById("dashboardRecentHistory"),
+
   openTablesGrid: document.getElementById("openTablesGrid"),
   historyList: document.getElementById("historyList"),
+
+  quickProductName: document.getElementById("quickProductName"),
+  quickProductPrice: document.getElementById("quickProductPrice"),
+  quickProductCategory: document.getElementById("quickProductCategory"),
+  addQuickProductBtn: document.getElementById("addQuickProductBtn"),
+  quickProductsList: document.getElementById("quickProductsList"),
+  quickProductsForTable: document.getElementById("quickProductsForTable"),
 
   tableModal: document.getElementById("tableModal"),
   newTableName: document.getElementById("newTableName"),
@@ -30,9 +61,11 @@ const els = {
   activeTableName: document.getElementById("activeTableName"),
   activeTableMeta: document.getElementById("activeTableMeta"),
   backToTablesBtn: document.getElementById("backToTablesBtn"),
+  editTableName: document.getElementById("editTableName"),
   taxPercent: document.getElementById("taxPercent"),
   tipPercent: document.getElementById("tipPercent"),
   tipMode: document.getElementById("tipMode"),
+  tableStatusBadge: document.getElementById("tableStatusBadge"),
 
   personName: document.getElementById("personName"),
   addPersonBtn: document.getElementById("addPersonBtn"),
@@ -68,6 +101,15 @@ function formatDate(dateString) {
   });
 }
 
+function isToday(dateString) {
+  const date = new Date(dateString);
+  const today = new Date();
+
+  return date.getFullYear() === today.getFullYear()
+    && date.getMonth() === today.getMonth()
+    && date.getDate() === today.getDate();
+}
+
 function saveApp() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
 }
@@ -81,6 +123,7 @@ function loadApp() {
     const parsed = JSON.parse(saved);
     appState.tables = parsed.tables || [];
     appState.history = parsed.history || [];
+    appState.quickProducts = parsed.quickProducts?.length ? parsed.quickProducts : appState.quickProducts;
     appState.activeTableId = parsed.activeTableId || null;
     appState.lastSummary = parsed.lastSummary || null;
   } catch (error) {
@@ -103,15 +146,33 @@ function getTableEstimatedTotal(table) {
 }
 
 function setView(viewName) {
-  els.tablesView.classList.add("hidden");
-  els.historyView.classList.add("hidden");
-  els.tableDetailView.classList.add("hidden");
+  [
+    els.dashboardView,
+    els.tablesView,
+    els.productsView,
+    els.historyView,
+    els.tableDetailView
+  ].forEach(view => view.classList.add("hidden"));
 
-  els.navOpenTables.classList.remove("active");
-  els.navHistory.classList.remove("active");
+  [
+    els.navDashboard,
+    els.navOpenTables,
+    els.navProducts,
+    els.navHistory
+  ].forEach(btn => btn.classList.remove("active"));
 
   els.printBtn.classList.add("hidden");
   els.downloadBtn.classList.add("hidden");
+  els.exportHistoryBtn.classList.add("hidden");
+  els.clearHistoryBtn.classList.add("hidden");
+
+  if (viewName === "dashboard") {
+    els.dashboardView.classList.remove("hidden");
+    els.navDashboard.classList.add("active");
+    els.pageTitle.textContent = "Dashboard";
+    els.pageSubtitle.textContent = "Vista general de mesas, ventas y cuentas cerradas.";
+    renderDashboard();
+  }
 
   if (viewName === "tables") {
     els.tablesView.classList.remove("hidden");
@@ -121,11 +182,21 @@ function setView(viewName) {
     renderOpenTables();
   }
 
+  if (viewName === "products") {
+    els.productsView.classList.remove("hidden");
+    els.navProducts.classList.add("active");
+    els.pageTitle.textContent = "Productos frecuentes";
+    els.pageSubtitle.textContent = "Administra productos rápidos para cargar pedidos más rápido.";
+    renderQuickProductsManager();
+  }
+
   if (viewName === "history") {
     els.historyView.classList.remove("hidden");
     els.navHistory.classList.add("active");
     els.pageTitle.textContent = "Historial";
-    els.pageSubtitle.textContent = "Consulta las cuentas cerradas en este navegador.";
+    els.pageSubtitle.textContent = "Consulta y exporta cuentas cerradas.";
+    els.exportHistoryBtn.classList.remove("hidden");
+    els.clearHistoryBtn.classList.remove("hidden");
     renderHistory();
   }
 
@@ -136,6 +207,55 @@ function setView(viewName) {
     els.printBtn.classList.remove("hidden");
     els.downloadBtn.classList.remove("hidden");
     renderActiveTable();
+  }
+}
+
+function renderDashboard() {
+  const closedToday = appState.history.filter(item => isToday(item.closedAt));
+  const salesToday = closedToday.reduce((sum, item) => sum + item.tableTotal, 0);
+  const avgToday = closedToday.length ? salesToday / closedToday.length : 0;
+
+  els.kpiOpenTables.textContent = appState.tables.length;
+  els.kpiClosedToday.textContent = closedToday.length;
+  els.kpiSalesToday.textContent = formatMoney(salesToday);
+  els.kpiAvgTable.textContent = formatMoney(avgToday);
+
+  els.dashboardOpenTables.innerHTML = "";
+  els.dashboardRecentHistory.innerHTML = "";
+
+  if (appState.tables.length === 0) {
+    els.dashboardOpenTables.innerHTML = `<div class="empty-state">No hay mesas abiertas.</div>`;
+  } else {
+    appState.tables.slice(0, 5).forEach(table => {
+      const row = document.createElement("div");
+      row.className = "mini-row";
+      row.innerHTML = `
+        <div>
+          <h4>${table.name}</h4>
+          <p>${table.people.length} personas · ${table.items.length} productos</p>
+        </div>
+        <strong>${formatMoney(getTableEstimatedTotal(table))}</strong>
+      `;
+      row.onclick = () => openTable(table.id);
+      els.dashboardOpenTables.appendChild(row);
+    });
+  }
+
+  if (appState.history.length === 0) {
+    els.dashboardRecentHistory.innerHTML = `<div class="empty-state">Todavía no hay cuentas cerradas.</div>`;
+  } else {
+    appState.history.slice(0, 5).forEach(item => {
+      const row = document.createElement("div");
+      row.className = "mini-row";
+      row.innerHTML = `
+        <div>
+          <h4>${item.tableName}</h4>
+          <p>${formatDate(item.closedAt)}</p>
+        </div>
+        <strong>${formatMoney(item.tableTotal)}</strong>
+      `;
+      els.dashboardRecentHistory.appendChild(row);
+    });
   }
 }
 
@@ -197,8 +317,10 @@ function renderOpenTables() {
     card.className = "table-card";
     card.onclick = () => openTable(table.id);
 
+    const calculated = table.status === "calculated";
+
     card.innerHTML = `
-      <span class="badge">Abierta</span>
+      <span class="badge ${calculated ? "calculated" : ""}">${calculated ? "Calculada" : "Abierta"}</span>
       <h3>${table.name}</h3>
       <p>${table.people.length} personas · ${table.items.length} productos</p>
       <p>Creada: ${formatDate(table.createdAt)}</p>
@@ -225,26 +347,39 @@ function renderActiveTable() {
   }
 
   els.activeTableName.textContent = table.name;
+  els.editTableName.value = table.name;
   els.activeTableMeta.textContent = `Abierta desde ${formatDate(table.createdAt)}`;
   els.taxPercent.value = table.taxPercent || 0;
   els.tipPercent.value = table.tipPercent || 0;
   els.tipMode.value = table.tipMode || "proportional";
+  els.tableStatusBadge.textContent = `Estado: ${table.status === "calculated" ? "Calculada" : "Abierta"}`;
 
   renderPeople();
+  renderQuickProductsForTable();
   renderItems();
-  els.summary.innerHTML = "";
+
+  if (appState.lastSummary && appState.lastSummary.tableId === table.id) {
+    renderSummary(appState.lastSummary);
+  } else {
+    els.summary.innerHTML = "";
+  }
 }
 
 function updateActiveTableSettings() {
   const table = getActiveTable();
   if (!table) return;
 
+  table.name = els.editTableName.value.trim() || table.name;
   table.taxPercent = Number(els.taxPercent.value) || 0;
   table.tipPercent = Number(els.tipPercent.value) || 0;
   table.tipMode = els.tipMode.value;
 
   appState.lastSummary = null;
+  table.status = "open";
+
   saveApp();
+  els.activeTableName.textContent = table.name;
+  els.tableStatusBadge.textContent = "Estado: Abierta";
 }
 
 function addPerson() {
@@ -265,6 +400,27 @@ function addPerson() {
 
   els.personName.value = "";
   appState.lastSummary = null;
+  table.status = "open";
+
+  saveApp();
+  renderPeople();
+  renderItems();
+}
+
+function editPerson(personId) {
+  const table = getActiveTable();
+  if (!table) return;
+
+  const person = table.people.find(person => person.id === personId);
+  if (!person) return;
+
+  const newName = prompt("Editar nombre de persona:", person.name);
+
+  if (!newName || !newName.trim()) return;
+
+  person.name = newName.trim();
+  appState.lastSummary = null;
+  table.status = "open";
 
   saveApp();
   renderPeople();
@@ -277,14 +433,14 @@ function removePerson(personId) {
 
   table.people = table.people.filter(person => person.id !== personId);
 
-  table.items = table.items.map(item => {
-    return {
-      ...item,
-      assignedPeopleIds: item.assignedPeopleIds.filter(id => id !== personId)
-    };
-  });
+  table.items = table.items.map(item => ({
+    ...item,
+    assignedPeopleIds: item.assignedPeopleIds.filter(id => id !== personId)
+  }));
 
   appState.lastSummary = null;
+  table.status = "open";
+
   saveApp();
   renderPeople();
   renderItems();
@@ -305,6 +461,7 @@ function renderPeople() {
     pill.className = "person-pill";
     pill.innerHTML = `
       <span>${person.name}</span>
+      <button title="Editar persona" onclick="editPerson('${person.id}')">✎</button>
       <button title="Eliminar persona" onclick="removePerson('${person.id}')">×</button>
     `;
     els.peopleList.appendChild(pill);
@@ -347,6 +504,77 @@ function addItem() {
   els.itemPrice.value = "";
 
   appState.lastSummary = null;
+  table.status = "open";
+
+  saveApp();
+  renderItems();
+}
+
+function addQuickProductToTable(productId) {
+  const table = getActiveTable();
+  if (!table) return;
+
+  const product = appState.quickProducts.find(item => item.id === productId);
+  if (!product) return;
+
+  const qtyInput = document.getElementById(`quickQty_${productId}`);
+  const quantity = Number(qtyInput?.value) || 1;
+
+  table.items.push({
+    id: createId("item"),
+    name: product.name,
+    quantity,
+    price: product.price,
+    assignedPeopleIds: []
+  });
+
+  appState.lastSummary = null;
+  table.status = "open";
+  saveApp();
+  renderItems();
+}
+
+function editItem(itemId) {
+  const table = getActiveTable();
+  if (!table) return;
+
+  const item = table.items.find(item => item.id === itemId);
+  if (!item) return;
+
+  const newName = prompt("Editar producto:", item.name);
+  if (!newName || !newName.trim()) return;
+
+  const newQty = prompt("Editar cantidad:", item.quantity);
+  if (!newQty || Number(newQty) <= 0) return;
+
+  const newPrice = prompt("Editar precio unitario:", item.price);
+  if (!newPrice || Number(newPrice) <= 0) return;
+
+  item.name = newName.trim();
+  item.quantity = Number(newQty);
+  item.price = Number(newPrice);
+
+  appState.lastSummary = null;
+  table.status = "open";
+  saveApp();
+  renderItems();
+}
+
+function duplicateItem(itemId) {
+  const table = getActiveTable();
+  if (!table) return;
+
+  const item = table.items.find(item => item.id === itemId);
+  if (!item) return;
+
+  table.items.push({
+    ...item,
+    id: createId("item"),
+    assignedPeopleIds: [...item.assignedPeopleIds]
+  });
+
+  appState.lastSummary = null;
+  table.status = "open";
   saveApp();
   renderItems();
 }
@@ -358,6 +586,7 @@ function removeItem(itemId) {
   table.items = table.items.filter(item => item.id !== itemId);
 
   appState.lastSummary = null;
+  table.status = "open";
   saveApp();
   renderItems();
   els.summary.innerHTML = "";
@@ -377,6 +606,7 @@ function toggleItemAssignment(itemId, personId) {
   }
 
   appState.lastSummary = null;
+  table.status = "open";
   saveApp();
 }
 
@@ -416,7 +646,11 @@ function renderItems() {
           <div class="item-title">${item.name}</div>
           <div class="item-price">${item.quantity} × ${formatMoney(item.price)} = ${formatMoney(itemTotal)}</div>
         </div>
-        <button class="danger-btn" onclick="removeItem('${item.id}')">Eliminar</button>
+        <div class="item-actions">
+          <button class="secondary-btn" onclick="editItem('${item.id}')">Editar</button>
+          <button class="secondary-btn" onclick="duplicateItem('${item.id}')">Duplicar</button>
+          <button class="danger-btn" onclick="removeItem('${item.id}')">Eliminar</button>
+        </div>
       </div>
 
       <p>¿Quién consumió este producto?</p>
@@ -429,7 +663,6 @@ function renderItems() {
 
 function calculateBill({ silent = false } = {}) {
   const table = getActiveTable();
-
   if (!table) return null;
 
   updateActiveTableSettings();
@@ -521,9 +754,13 @@ function calculateBill({ silent = false } = {}) {
   };
 
   appState.lastSummary = result;
+  table.status = "calculated";
   saveApp();
 
-  if (!silent) renderSummary(result);
+  if (!silent) {
+    renderSummary(result);
+    els.tableStatusBadge.textContent = "Estado: Calculada";
+  }
 
   return result;
 }
@@ -566,8 +803,8 @@ function renderSummary(result) {
   }).join("");
 
   els.summary.innerHTML = `
-    <h3>${result.tableName}</h3>
-    <p>Resumen generado: ${formatDate(result.closedAt)}</p>
+    <h3>PAYTABLE</h3>
+    <p><strong>${result.tableName}</strong> · Resumen generado: ${formatDate(result.closedAt)}</p>
 
     <div class="summary-grid">
       ${peopleCards}
@@ -601,7 +838,8 @@ function closeTable() {
   appState.lastSummary = null;
 
   saveApp();
-  setView("tables");
+  alert("Cuenta cerrada correctamente.");
+  setView("dashboard");
 }
 
 function deleteTable() {
@@ -649,10 +887,122 @@ function renderHistory() {
   });
 }
 
+function addQuickProduct() {
+  const name = els.quickProductName.value.trim();
+  const price = Number(els.quickProductPrice.value);
+  const category = els.quickProductCategory.value.trim() || "General";
+
+  if (!name) {
+    alert("Escribe el nombre del producto.");
+    return;
+  }
+
+  if (!price || price <= 0) {
+    alert("Escribe un precio válido.");
+    return;
+  }
+
+  appState.quickProducts.push({
+    id: createId("qp"),
+    name,
+    price,
+    category
+  });
+
+  els.quickProductName.value = "";
+  els.quickProductPrice.value = "";
+  els.quickProductCategory.value = "";
+
+  saveApp();
+  renderQuickProductsManager();
+}
+
+function editQuickProduct(productId) {
+  const product = appState.quickProducts.find(item => item.id === productId);
+  if (!product) return;
+
+  const name = prompt("Editar nombre:", product.name);
+  if (!name || !name.trim()) return;
+
+  const price = prompt("Editar precio:", product.price);
+  if (!price || Number(price) <= 0) return;
+
+  const category = prompt("Editar categoría:", product.category || "General");
+
+  product.name = name.trim();
+  product.price = Number(price);
+  product.category = category?.trim() || "General";
+
+  saveApp();
+  renderQuickProductsManager();
+}
+
+function deleteQuickProduct(productId) {
+  const confirmation = confirm("¿Eliminar este producto frecuente?");
+  if (!confirmation) return;
+
+  appState.quickProducts = appState.quickProducts.filter(item => item.id !== productId);
+  saveApp();
+  renderQuickProductsManager();
+}
+
+function renderQuickProductsManager() {
+  els.quickProductsList.innerHTML = "";
+
+  if (appState.quickProducts.length === 0) {
+    els.quickProductsList.innerHTML = `<div class="empty-state">No hay productos frecuentes guardados.</div>`;
+    return;
+  }
+
+  appState.quickProducts.forEach(product => {
+    const row = document.createElement("div");
+    row.className = "quick-product-row";
+
+    row.innerHTML = `
+      <div>
+        <h3>${product.name}</h3>
+        <p>${product.category || "General"} · ${formatMoney(product.price)}</p>
+      </div>
+      <div class="item-actions">
+        <button class="secondary-btn" onclick="editQuickProduct('${product.id}')">Editar</button>
+        <button class="danger-btn" onclick="deleteQuickProduct('${product.id}')">Eliminar</button>
+      </div>
+    `;
+
+    els.quickProductsList.appendChild(row);
+  });
+}
+
+function renderQuickProductsForTable() {
+  els.quickProductsForTable.innerHTML = "";
+
+  if (appState.quickProducts.length === 0) {
+    els.quickProductsForTable.innerHTML = `<p class="notice">No hay productos frecuentes guardados.</p>`;
+    return;
+  }
+
+  appState.quickProducts.forEach(product => {
+    const card = document.createElement("div");
+    card.className = "quick-product-card";
+
+    card.innerHTML = `
+      <h4>${product.name}</h4>
+      <p>${product.category || "General"} · ${formatMoney(product.price)}</p>
+      <div class="quick-add-controls">
+        <input id="quickQty_${product.id}" type="number" min="1" value="1" />
+        <button onclick="addQuickProductToTable('${product.id}')">Agregar</button>
+      </div>
+    `;
+
+    els.quickProductsForTable.appendChild(card);
+  });
+}
+
 function buildSummaryText(result) {
   const lines = [];
 
-  lines.push("PayTable - Resumen de cuenta");
+  lines.push("PAYTABLE");
+  lines.push("Resumen de cuenta");
   lines.push("--------------------------------");
   lines.push(`Mesa: ${result.tableName}`);
   lines.push(`Fecha: ${formatDate(result.closedAt)}`);
@@ -673,7 +1023,7 @@ function buildSummaryText(result) {
   lines.push(`Subtotal mesa: ${formatMoney(result.tableSubtotal)}`);
   lines.push(`Impuesto mesa: ${formatMoney(result.tableTax)}`);
   lines.push(`Propina mesa: ${formatMoney(result.tableTip)}`);
-  lines.push(`Total mesa: ${formatMoney(result.tableTotal)}`);
+  lines.push(`TOTAL MESA: ${formatMoney(result.tableTotal)}`);
 
   return lines.join("\n");
 }
@@ -705,22 +1055,83 @@ function downloadSummary() {
   URL.revokeObjectURL(url);
 }
 
+function exportHistoryToCsv() {
+  if (appState.history.length === 0) {
+    alert("No hay historial para exportar.");
+    return;
+  }
+
+  const headers = [
+    "tableName",
+    "closedAt",
+    "peopleCount",
+    "subtotal",
+    "tax",
+    "tip",
+    "total"
+  ];
+
+  const rows = appState.history.map(item => [
+    item.tableName,
+    formatDate(item.closedAt),
+    item.peopleTotals.length,
+    item.tableSubtotal.toFixed(2),
+    item.tableTax.toFixed(2),
+    item.tableTip.toFixed(2),
+    item.tableTotal.toFixed(2)
+  ]);
+
+  const csv = [
+    headers.join(","),
+    ...rows.map(row => row.map(value => `"${String(value).replaceAll('"', '""')}"`).join(","))
+  ].join("\n");
+
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+
+  link.href = url;
+  link.download = "PayTable_Historial.csv";
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
+function clearHistory() {
+  const confirmation = confirm("¿Seguro que quieres borrar todo el historial? Esta acción no se puede deshacer.");
+  if (!confirmation) return;
+
+  appState.history = [];
+  saveApp();
+  renderHistory();
+}
+
+els.navDashboard.addEventListener("click", () => setView("dashboard"));
 els.navOpenTables.addEventListener("click", () => setView("tables"));
+els.navProducts.addEventListener("click", () => setView("products"));
 els.navHistory.addEventListener("click", () => setView("history"));
+
 els.newTableBtn.addEventListener("click", openNewTableModal);
+els.dashboardNewTableBtn.addEventListener("click", openNewTableModal);
 els.cancelNewTableBtn.addEventListener("click", closeNewTableModal);
 els.createTableBtn.addEventListener("click", createTable);
 els.backToTablesBtn.addEventListener("click", () => setView("tables"));
 
 els.addPersonBtn.addEventListener("click", addPerson);
 els.addItemBtn.addEventListener("click", addItem);
+els.addQuickProductBtn.addEventListener("click", addQuickProduct);
+
 els.calculateBtn.addEventListener("click", () => calculateBill());
 els.closeTableBtn.addEventListener("click", closeTable);
 els.deleteTableBtn.addEventListener("click", deleteTable);
 
 els.printBtn.addEventListener("click", printSummary);
 els.downloadBtn.addEventListener("click", downloadSummary);
+els.exportHistoryBtn.addEventListener("click", exportHistoryToCsv);
+els.clearHistoryBtn.addEventListener("click", clearHistory);
 
+els.editTableName.addEventListener("input", updateActiveTableSettings);
 els.taxPercent.addEventListener("input", updateActiveTableSettings);
 els.tipPercent.addEventListener("input", updateActiveTableSettings);
 els.tipMode.addEventListener("change", updateActiveTableSettings);
@@ -737,10 +1148,21 @@ els.itemPrice.addEventListener("keydown", event => {
   if (event.key === "Enter") addItem();
 });
 
+els.quickProductPrice.addEventListener("keydown", event => {
+  if (event.key === "Enter") addQuickProduct();
+});
+
 window.openNewTableModal = openNewTableModal;
+window.openTable = openTable;
 window.removePerson = removePerson;
+window.editPerson = editPerson;
 window.removeItem = removeItem;
+window.editItem = editItem;
+window.duplicateItem = duplicateItem;
 window.toggleItemAssignment = toggleItemAssignment;
+window.addQuickProductToTable = addQuickProductToTable;
+window.editQuickProduct = editQuickProduct;
+window.deleteQuickProduct = deleteQuickProduct;
 
 loadApp();
-setView("tables");
+setView("dashboard");
